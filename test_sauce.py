@@ -10,13 +10,26 @@ import conftest
 
 @pytest.mark.usefixtures("driver_init")
 class TestSauce:
-    #En az 1 testiniz parametrize fonksiyonu ile en az 3 farklı veriyle test edilmelidir.
+    def getData():
+        excelFile = openpyxl.load_workbook("data/basarisizgiris.xlsx") #dosya açılıyor
+        sheet = excelFile["Sheet1"] #hangi sayfada çalıştığımızı belirtiyoruz
+        rows = sheet.max_row #kaçıncı satıra kadar veri var?
+        data = []
+        for i in range(2,rows+1):  # Başlık satırını atlamak için 2'den başlıyoruz
+            username = sheet.cell(i,1).value #i. satırın 1. hücresi(cell) username'i tutuyor
+            password = sheet.cell(i,2).value
+            message = sheet.cell(i, 3).value  # Beklenen hata mesajının 3. sütunda olduğunu varsayıyoruz
+            data.append((username,password,message))
+
+        return data   
+
+       #En az 1 testiniz parametrize fonksiyonu ile en az 3 farklı veriyle test edilmelidir.
     @pytest.mark.parametrize("username, password, message", [
         ("", "", "Epic sadface: Username is required"),
         ("standard_user", "", "Epic sadface: Password is required"),
         ("locked_out_user", "secret_sauce", "Epic sadface: Sorry, this user has been locked out.")
     ])
-    def test_login(self, username, password, message):
+    def basarisiz_giris(self, username, password, message):
         self.login(username, password)
         errorMessage = WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".error-message-container.error")))
         assert errorMessage.text == message, f"Expected message was not displayed for {username}"
